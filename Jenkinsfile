@@ -3,30 +3,30 @@ pipeline {
 
     stages {
 
-        stage('Clone') {
+        stage('Clean') {
             steps {
-                echo 'Code cloned successfully'
-            }
-        }
-
-        stage('Build') {
-            steps {
-                echo 'Building HTML project...'
-            }
-        }
-
-        stage('Test') {
-            steps {
-                echo 'Testing project...'
+                deleteDir()
             }
         }
 
         stage('Deploy') {
             steps {
-                sh '''
-                scp -i /tmp/jenkins-key.pem -o StrictHostKeyChecking=no index1.html ubuntu@16.170.203.189:/tmp/
-                ssh -i /tmp/jenkins-key.pem -o StrictHostKeyChecking=no ubuntu@16.170.203.189 "sudo mv /tmp/index1.html /var/www/html/index.html"
-                '''
+                script {
+                    if (env.BRANCH_NAME == 'main') {
+                        sh 'cp -r . /var/www/main/'
+                        echo 'Main branch - deployed to main server'
+                    } 
+                    else if (env.BRANCH_NAME == 'feature') {
+                        sh 'cp -r . /var/www/feature/'
+                        echo 'Feature branch - deployed to feature server'
+                    } 
+                    else if (env.BRANCH_NAME == 'prefix') {
+                        echo 'Prefix branch - only checking, not deploying'
+                    } 
+                    else {
+                        echo "Unknown branch: ${env.BRANCH_NAME} - skipping"
+                    }
+                }
             }
         }
 
